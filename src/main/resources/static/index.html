@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#17251f">
+  <title>FilmJury | Contest desk</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="FilmJury home">
+        <span class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span class="brand-name">film<span>jury</span></span>
+      </a>
+      <p class="sidebar-caption">SHORT FILM CONTEST</p>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <button class="nav-link active" type="button" data-view="overview">
+          <span class="nav-icon icon-grid" aria-hidden="true"></span><span>Overview</span>
+        </button>
+        <button class="nav-link" type="button" data-view="entries">
+          <span class="nav-icon icon-film" aria-hidden="true"></span><span>Film entries</span>
+        </button>
+        <button class="nav-link" type="button" data-view="jury">
+          <span class="nav-icon icon-people" aria-hidden="true"></span><span>Jury desk</span>
+        </button>
+        <button class="nav-link" type="button" data-view="leaderboard">
+          <span class="nav-icon icon-bars" aria-hidden="true"></span><span>Leaderboard</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <span class="connection-dot" id="connectionDot"></span>
+        <div>
+          <strong id="connectionLabel">Connecting</strong>
+          <span>Local API</span>
+        </div>
+        <span class="connection-address">:8080</span>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="breadcrumbs"><span>FILMJURY</span><span class="crumb-divider">/</span><span id="currentSection">OVERVIEW</span></div>
+        <div class="topbar-actions">
+          <span class="local-badge"><span></span> Local workspace</span>
+          <button class="icon-button" id="refreshButton" type="button" aria-label="Refresh dashboard" title="Refresh dashboard">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M5.6 9a7 7 0 0 1 11.7-2L20 12M4 12l2.7 5a7 7 0 0 0 11.7-2"></path></svg>
+          </button>
+        </div>
+      </header>
+
+      <div class="page-wrap">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow" id="pageEyebrow">CONTEST CONTROL ROOM</p>
+            <h1 id="pageTitle">Overview</h1>
+            <p class="page-subtitle" id="pageSubtitle">A clear view of the films, jury, and scores.</p>
+          </div>
+          <button class="primary-button" type="button" data-go="entries"><span aria-hidden="true">+</span> Add film entry</button>
+        </div>
+
+        <div class="notice" id="notice" role="status" aria-live="polite" hidden></div>
+
+        <section class="view-panel" id="view-overview" aria-labelledby="pageTitle">
+          <div class="metric-grid">
+            <article class="metric metric-green">
+              <div class="metric-top"><span>Film entries</span><span class="metric-icon icon-film" aria-hidden="true"></span></div>
+              <strong id="entryCount">--</strong><span class="metric-note">submitted to the contest</span>
+            </article>
+            <article class="metric metric-white">
+              <div class="metric-top"><span>Judges</span><span class="metric-icon icon-people" aria-hidden="true"></span></div>
+              <strong id="judgeCount">--</strong><span class="metric-note">on the jury panel</span>
+            </article>
+            <article class="metric metric-white">
+              <div class="metric-top"><span>Scored films</span><span class="metric-icon icon-check" aria-hidden="true"></span></div>
+              <strong id="scoredCount">--</strong><span class="metric-note">with at least one scorecard</span>
+            </article>
+            <article class="metric metric-dark">
+              <div class="metric-top"><span>Top average</span><span class="metric-icon icon-star" aria-hidden="true"></span></div>
+              <strong id="topScore">--</strong><span class="metric-note" id="topFilm">No scores yet</span>
+            </article>
+          </div>
+
+          <div class="content-grid overview-grid">
+            <section class="data-section leaderboard-preview">
+              <div class="section-heading">
+                <div><p class="eyebrow">THE CURRENT STANDINGS</p><h2>Leaderboard</h2></div>
+                <button class="text-button" type="button" data-go="leaderboard">Full leaderboard <span aria-hidden="true">&#8594;</span></button>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th scope="col">Rank</th><th scope="col">Film</th><th scope="col">Genre</th><th scope="col">Average</th></tr></thead>
+                  <tbody id="overviewLeaderboard"></tbody>
+                </table>
+              </div>
+              <p class="empty-state" id="overviewLeaderboardEmpty" hidden>No scorecards have been submitted yet.</p>
+            </section>
+
+            <section class="data-section recent-section">
+              <div class="section-heading">
+                <div><p class="eyebrow">LATEST SUBMISSIONS</p><h2>Film entries</h2></div>
+                <button class="text-button" type="button" data-go="entries">View all <span aria-hidden="true">&#8594;</span></button>
+              </div>
+              <div class="recent-list" id="recentEntries"></div>
+              <p class="empty-state" id="recentEntriesEmpty" hidden>No film entries yet.</p>
+            </section>
+          </div>
+        </section>
+
+        <section class="view-panel" id="view-entries" aria-labelledby="pageTitle" hidden>
+          <div class="content-grid management-grid">
+            <section class="data-section">
+              <div class="section-heading">
+                <div><p class="eyebrow">SUBMISSIONS</p><h2>All film entries</h2></div>
+                <label class="search-field"><span class="search-symbol" aria-hidden="true"></span><input id="entrySearch" type="search" placeholder="Search films" aria-label="Search film entries"></label>
+              </div>
+              <div class="table-scroll">
+                <table>
+                  <thead><tr><th scope="col">Film</th><th scope="col">Genre</th><th scope="col">Average</th><th scope="col"><span class="sr-only">Actions</span></th></tr></thead>
+                  <tbody id="entriesTable"></tbody>
+                </table>
+              </div>
+              <p class="empty-state" id="entriesEmpty" hidden>No film entries match this view.</p>
+            </section>
+
+            <form class="form-panel" id="entryForm">
+              <p class="eyebrow">NEW SUBMISSION</p>
+              <h2>Add a film</h2>
+              <label>Film title<input name="title" required maxlength="160" placeholder="e.g. The Last Hope"></label>
+              <label>Genre<input name="genre" required maxlength="80" placeholder="e.g. Drama"></label>
+              <label>Video link<input name="videoLink" type="url" required placeholder="https://"></label>
+              <button class="primary-button form-submit" type="submit">Add film entry <span aria-hidden="true">&#8594;</span></button>
+            </form>
+          </div>
+        </section>
+
+        <section class="view-panel" id="view-jury" aria-labelledby="pageTitle" hidden>
+          <div class="content-grid jury-grid">
+            <div class="jury-main">
+              <section class="data-section">
+                <div class="section-heading"><div><p class="eyebrow">THE PANEL</p><h2>Judges</h2></div><span class="count-label" id="juryCountLabel">0 judges</span></div>
+                <div class="judge-list" id="judgesList"></div>
+                <p class="empty-state" id="judgesEmpty" hidden>No judges have been added yet.</p>
+              </section>
+
+              <section class="data-section score-section">
+                <div class="section-heading"><div><p class="eyebrow">FOUR FIXED CRITERIA</p><h2>Submit a scorecard</h2></div></div>
+                <form id="scoreForm" class="score-form">
+                  <div class="field-pair">
+                    <label>Film<select name="entryId" id="scoreEntry" required><option value="">Choose a film</option></select></label>
+                    <label>Judge<select name="judgeId" id="scoreJudge" required><option value="">Choose a judge</option></select></label>
+                  </div>
+                  <p class="assign-reminder">Only judges assigned to a film can submit scores. Assign the judge below first.</p>
+                  <div class="score-input-grid">
+                    <label>Story<input name="Story" type="number" min="1" max="10" value="8" required><span>1 - 10</span></label>
+                    <label>Direction<input name="Direction" type="number" min="1" max="10" value="8" required><span>1 - 10</span></label>
+                    <label>Acting<input name="Acting" type="number" min="1" max="10" value="8" required><span>1 - 10</span></label>
+                    <label>Cinematography<input name="Cinematography" type="number" min="1" max="10" value="8" required><span>1 - 10</span></label>
+                  </div>
+                  <button class="primary-button" type="submit">Submit scorecard <span aria-hidden="true">&#8594;</span></button>
+                </form>
+              </section>
+            </div>
+
+            <div class="jury-side">
+              <form class="form-panel" id="judgeForm">
+                <p class="eyebrow">ADD TO THE PANEL</p>
+                <h2>New judge</h2>
+                <label>Full name<input name="name" required maxlength="120" placeholder="Judge name"></label>
+                <label>Email address<input name="email" type="email" required maxlength="254" placeholder="judge@example.com"></label>
+                <button class="primary-button form-submit" type="submit">Add judge <span aria-hidden="true">&#8594;</span></button>
+              </form>
+
+              <form class="assignment-panel" id="assignmentForm">
+                <p class="eyebrow">JURY ACCESS</p>
+                <h2>Assign a judge</h2>
+                <label>Film<select name="entryId" id="assignEntry" required><option value="">Choose a film</option></select></label>
+                <label>Judge<select name="judgeId" id="assignJudge" required><option value="">Choose a judge</option></select></label>
+                <button class="secondary-button" type="submit">Assign judge <span aria-hidden="true">&#8594;</span></button>
+              </form>
+            </div>
+          </div>
+        </section>
+
+        <section class="view-panel" id="view-leaderboard" aria-labelledby="pageTitle" hidden>
+          <section class="data-section full-leaderboard">
+            <div class="section-heading">
+              <div><p class="eyebrow">RANKED BY JURY AVERAGE</p><h2>Leaderboard</h2></div>
+              <span class="count-label" id="leaderboardCount">0 scored films</span>
+            </div>
+            <div class="table-scroll">
+              <table>
+                <thead><tr><th scope="col">Rank</th><th scope="col">Film</th><th scope="col">Genre</th><th scope="col">Average score</th></tr></thead>
+                <tbody id="leaderboardTable"></tbody>
+              </table>
+            </div>
+            <p class="empty-state" id="leaderboardEmpty" hidden>Scored entries will appear here.</p>
+          </section>
+        </section>
+
+        <footer class="page-footer"><span>FILMJURY CONTEST DESK</span><span>Running locally <span class="footer-dot"></span> localhost:8080</span></footer>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

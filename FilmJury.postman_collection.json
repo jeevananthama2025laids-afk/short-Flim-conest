@@ -1,0 +1,116 @@
+{
+  "info": {
+    "_postman_id": "a6525893-0ed7-4f94-8f9c-04961584e23f",
+    "name": "FilmJury Local API",
+    "description": "Local Spring Boot workflow: create a film and two judges, assign judges, submit scorecards, verify duplicate rejection and averages, and view the leaderboard.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "entryId", "value": "" },
+    { "key": "judgeOneId", "value": "" },
+    { "key": "judgeTwoId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. Create entry",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"The Last Hope\",\n  \"genre\": \"Drama\",\n  \"videoLink\": \"https://example.com/video\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": { "raw": "{{baseUrl}}/api/entries", "host": ["{{baseUrl}}"], "path": ["api", "entries"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Entry created', function () { pm.response.to.have.status(201); });", "pm.collectionVariables.set('entryId', pm.response.json().id);"] } }]
+    },
+    {
+      "name": "2. Create judge one",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Judge One\",\n  \"email\": \"judge1@gmail.com\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": { "raw": "{{baseUrl}}/api/judges", "host": ["{{baseUrl}}"], "path": ["api", "judges"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Judge one created', function () { pm.response.to.have.status(201); });", "pm.collectionVariables.set('judgeOneId', pm.response.json().id);"] } }]
+    },
+    {
+      "name": "3. Create judge two",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"name\": \"Judge Two\",\n  \"email\": \"judge2@gmail.com\"\n}", "options": { "raw": { "language": "json" } } },
+        "url": { "raw": "{{baseUrl}}/api/judges", "host": ["{{baseUrl}}"], "path": ["api", "judges"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Judge two created', function () { pm.response.to.have.status(201); });", "pm.collectionVariables.set('judgeTwoId', pm.response.json().id);"] } }]
+    },
+    {
+      "name": "4. Assign judge one to entry",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/api/entries/{{entryId}}/judges/{{judgeOneId}}", "host": ["{{baseUrl}}"], "path": ["api", "entries", "{{entryId}}", "judges", "{{judgeOneId}}"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Judge one assigned', function () { pm.response.to.have.status(200); });"] } }]
+    },
+    {
+      "name": "5. Submit judge one's scorecard",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"scores\": {\n    \"Story\": 8,\n    \"Direction\": 9,\n    \"Acting\": 7,\n    \"Cinematography\": 8\n  }\n}", "options": { "raw": { "language": "json" } } },
+        "url": { "raw": "{{baseUrl}}/api/entries/{{entryId}}/judges/{{judgeOneId}}/score", "host": ["{{baseUrl}}"], "path": ["api", "entries", "{{entryId}}", "judges", "{{judgeOneId}}", "score"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Scorecard accepted', function () { pm.response.to.have.status(200); });", "pm.test('First average is 8.0', function () { pm.expect(pm.response.json().averageScore).to.eql(8); });"] } }]
+    },
+    {
+      "name": "6. Reject duplicate scorecard",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"scores\": {\n    \"Story\": 8,\n    \"Direction\": 9,\n    \"Acting\": 7,\n    \"Cinematography\": 8\n  }\n}", "options": { "raw": { "language": "json" } } },
+        "url": { "raw": "{{baseUrl}}/api/entries/{{entryId}}/judges/{{judgeOneId}}/score", "host": ["{{baseUrl}}"], "path": ["api", "entries", "{{entryId}}", "judges", "{{judgeOneId}}", "score"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Duplicate scorecard returns 409', function () { pm.response.to.have.status(409); });", "pm.test('Duplicate message is returned', function () { pm.expect(pm.response.json().message).to.eql('Judge has already submitted a scorecard for this entry.'); });"] } }]
+    },
+    {
+      "name": "7. Get entry average",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/entries/{{entryId}}/score", "host": ["{{baseUrl}}"], "path": ["api", "entries", "{{entryId}}", "score"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Entry average returned', function () { pm.response.to.have.status(200); });", "pm.test('Average is 8.0', function () { pm.expect(pm.response.json().averageScore).to.eql(8); });"] } }]
+    },
+    {
+      "name": "8. Assign judge two to entry",
+      "request": {
+        "method": "POST",
+        "url": { "raw": "{{baseUrl}}/api/entries/{{entryId}}/judges/{{judgeTwoId}}", "host": ["{{baseUrl}}"], "path": ["api", "entries", "{{entryId}}", "judges", "{{judgeTwoId}}"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Judge two assigned', function () { pm.response.to.have.status(200); });"] } }]
+    },
+    {
+      "name": "9. Submit judge two's scorecard",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"scores\": {\n    \"Story\": 9,\n    \"Direction\": 9,\n    \"Acting\": 9,\n    \"Cinematography\": 9\n  }\n}", "options": { "raw": { "language": "json" } } },
+        "url": { "raw": "{{baseUrl}}/api/entries/{{entryId}}/judges/{{judgeTwoId}}/score", "host": ["{{baseUrl}}"], "path": ["api", "entries", "{{entryId}}", "judges", "{{judgeTwoId}}", "score"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Second scorecard accepted', function () { pm.response.to.have.status(200); });", "pm.test('Updated average is 8.5', function () { pm.expect(pm.response.json().averageScore).to.eql(8.5); });"] } }]
+    },
+    {
+      "name": "10. Get updated entry average",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/entries/{{entryId}}/score", "host": ["{{baseUrl}}"], "path": ["api", "entries", "{{entryId}}", "score"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Updated average returned', function () { pm.response.to.have.status(200); });", "pm.test('Average is 8.5', function () { pm.expect(pm.response.json().averageScore).to.eql(8.5); });"] } }]
+    },
+    {
+      "name": "11. Get leaderboard",
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/leaderboard", "host": ["{{baseUrl}}"], "path": ["api", "leaderboard"] }
+      },
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('Leaderboard returned', function () { pm.response.to.have.status(200); });", "pm.test('Entry appears at rank one with average 8.5', function () { var rows = pm.response.json(); pm.expect(rows[0].entryId).to.eql(Number(pm.collectionVariables.get('entryId'))); pm.expect(rows[0].rank).to.eql(1); pm.expect(rows[0].averageScore).to.eql(8.5); });"] } }]
+    }
+  ]
+}
